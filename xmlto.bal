@@ -55,14 +55,16 @@ BankAccountReadXmlDetails(endpoint client, http:Request req) {
 	http:Response response;
         string filePath = "./files/test.xml";	        
     	
+	//Create the byte channel	
 	io:ByteChannel byteChannel = io:openFile(filePath, io:READ);
-
+	
+	//Derive the character channel from above byte channel
         io:CharacterChannel ch = new io:CharacterChannel(byteChannel, "UTF8");
 	
         match ch.readXml() {
             xml result => {
 		 
-		
+		 //convert XML content into JSON format
 		 json j1 = result.toJSON({});
 		 
    		 io:println(j1);			
@@ -101,16 +103,19 @@ BankAccountReadJsonDetails(endpoint client, http:Request req) {
 	http:Response response;
         string filePath = "./files/test.json";	        
     	
+	//Create the byte channel
 	io:ByteChannel byteChannel = io:openFile(filePath, io:READ);
-
+	
+	//Derive the character channel from above byte channel
         io:CharacterChannel ch = new io:CharacterChannel(byteChannel, "UTF8");
 	
         match ch.readJson() {
             json result => {
-		
+			//convert JSON content into XML format
 		        var j1 = result.toXML({});
            		match j1 {
             		xml value => {
+				//set the XML content as payload
 			        response.setXmlPayload(value);
 			        _ = client->respond(response);
 		            }
@@ -125,9 +130,11 @@ BankAccountReadJsonDetails(endpoint client, http:Request req) {
 
 
            }
+	   
+	   //If json file content cannot read
             error err => {
 		        response.statusCode = 404;
-		        json payload = " XML file cannot read ";
+		        json payload = " JSON file cannot read ";
                 response.setJsonPayload(payload);  
 		       	_ = client->respond(response);
 		        throw err;
