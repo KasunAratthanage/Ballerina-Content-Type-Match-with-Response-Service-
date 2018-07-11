@@ -40,6 +40,9 @@ map<json> bankDetails;
 }
 
 service<http:Service> accountMgt bind ep {
+
+//BankAccountReadJsonDetails and convert into XML
+
 @http:ResourceConfig {
         methods: ["GET"],
         path: "/account",
@@ -48,7 +51,7 @@ service<http:Service> accountMgt bind ep {
         }
     }
 
-retriveBankAccountDetails(endpoint client, http:Request req) {
+BankAccountReadXmlDetails(endpoint client, http:Request req) {
 	http:Response response;
         string filePath = "./files/test.xml";	        
     	
@@ -79,10 +82,58 @@ retriveBankAccountDetails(endpoint client, http:Request req) {
                 throw err;
             }
         }
-       		 
+     		 
 
 
 }
 
+// BankAccountReadJsonDetails and covert into XML
 
+@http:ResourceConfig {
+        methods: ["GET"],
+        path: "/account/bankreadjson",
+	authConfig: {
+        scopes: ["scope2"]
+        }
+    }
+
+BankAccountReadJsonDetails(endpoint client, http:Request req) {
+	http:Response response;
+        string filePath = "./files/test.json";	        
+    	
+	io:ByteChannel byteChannel = io:openFile(filePath, io:READ);
+
+        io:CharacterChannel ch = new io:CharacterChannel(byteChannel, "UTF8");
+	
+        match ch.readJson() {
+            json result => {
+		
+		        var j1 = result.toXML({});
+           		match j1 {
+            		xml value => {
+			        response.setXmlPayload(value);
+			        _ = client->respond(response);
+		            }
+                   	 error err => {
+                       	 response.statusCode = 500;
+                         response.setPayload(err.message);
+		               	_ = client->respond(response);
+		                throw err;
+
+                    }
+                }
+
+
+           }
+            error err => {
+		        response.statusCode = 404;
+		        json payload = " XML file cannot read ";
+                response.setJsonPayload(payload);  
+		       	_ = client->respond(response);
+		        throw err;
+            }
+        
+       }
+
+}
 }
